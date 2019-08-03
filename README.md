@@ -1,0 +1,2 @@
+# Machine_learning_In_Finance
+Built a trading algorithm in Python for the Tesla stocks returning in 39% higher returns than a simple buy and hold strategy, over a period of 2016-2018 . Designed random forest algorithm that combines CAPM, FAMA (French three factor model), Multi-Factor Linear Regression, Principal Component Analysis and Time series analysis to forecast stock prices . Generated trading signals using strategies such as Bollinger bands, Double crossover with evaluating risk and Sharpe ratio
