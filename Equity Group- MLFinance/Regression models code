@@ -1,0 +1,291 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "import numpy as np #Libraries\n",
+    "import matplotlib.pyplot as plt\n",
+    "%matplotlib inline\n",
+    "import pandas as pd\n",
+    "from statsmodels.tsa.arima_process import ArmaProcess\n",
+    "from pandas_datareader import data as wb \n",
+    "from scipy.stats import norm\n",
+    "from scipy import stats"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "df = pd.read_excel('alldata.xlsx')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "Y=df['TSLA']\n",
+    "X=df['SP500']\n",
+    "Y = pd.DataFrame(Y)\n",
+    "X = pd.DataFrame(X)\n",
+    "Y=np.matrix(Y)\n",
+    "X=np.matrix(X)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## First Model - CAPM( Capital Asset Pricing Model) "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "B1 values are : [[-3.22340253e+02]\n",
+      " [ 2.57326661e-01]]\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "32.21365921024142"
+      ]
+     },
+     "execution_count": 17,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "intercept_arr1 = [1]*len(df[\"SP500\"])\n",
+    "XT1 = np.matrix(np.asarray([np.asarray(intercept_arr1),\n",
+    "                                np.asarray(df['SP500'])]) )\n",
+    "XT1\n",
+    "XTT1 = np.matrix(np.transpose(XT1))\n",
+    "mult_1 = XT1*XTT1\n",
+    "B1 = np.matrix(((np.linalg.inv(mult_1))*XT1)*Y)\n",
+    "#print(\"B1 values are : {}\".format(B1))\n",
+    "y_CAPM = np.matrix(XTT1*B1)\n",
+    "residual_1 = Y - y_CAPM\n",
+    "rmse1=np.asarray(residual_1)\n",
+    "rmse1=np.sum(rmse1*rmse1)\n",
+    "(rmse1/500)**0.5\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Second Model- Fama and French Three Factor Model \n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "B2 values are : [[261.55128128]\n",
+      " [  2.14490746]\n",
+      " [ -1.61029391]\n",
+      " [ -8.40146264]]\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "61.479369763831336"
+      ]
+     },
+     "execution_count": 19,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "intercept_arr2 = [1]*len(df)\n",
+    "XT2 = np.matrix(np.asarray([np.asarray(intercept_arr2),\n",
+    "                                np.asarray(df['Mkt-RF']), \n",
+    "                                np.asarray(df['SMB']), \n",
+    "                                np.asarray(df['HML'])]))\n",
+    "XTT2 = np.matrix(np.transpose(XT2))\n",
+    "mult_2 = XT2*XTT2\n",
+    "B2 = np.matrix(((np.linalg.inv(mult_2))*XT2)*Y)\n",
+    "print(\"B2 values are : {}\".format(B2))\n",
+    "y_3Factor = np.matrix(XTT2*B2)\n",
+    "residual_2 = Y - y_3Factor\n",
+    "rmse2=np.asarray(residual_2)\n",
+    "rmse2=np.sum(rmse2*rmse2)\n",
+    "(rmse2/500)**0.5"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Third Model- Previous Return Model"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 88,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "B3 values are : [[-1.43041134e-12]\n",
+      " [ 1.00000000e+00]]\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "5.248653822304638"
+      ]
+     },
+     "execution_count": 88,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "intercept_arr3 = [1]*len(df)\n",
+    "YT=np.matrix(Y)                # making Y as matrix\n",
+    "XT3 = np.matrix(np.asarray([np.asarray(intercept_arr3),\n",
+    "                                np.asarray(df['TSLA'])])) \n",
+    "XTT3 = np.matrix(np.transpose(XT3))\n",
+    "mult_3 = XT3*XTT3\n",
+    "B3 = np.matrix(((np.linalg.inv(mult_3))*XT3)*Y)\n",
+    "print(\"B3 values are : {}\".format(B3))\n",
+    "y_PRM = np.matrix(XTT3*B3)\n",
+    "T=df[\"TSLA\"]                  # cannot use shift function on matrix \n",
+    "T_final=T.shift(-1)\n",
+    "T_final=np.matrix(T_final)\n",
+    "TfT = np.matrix(np.transpose(T_final))\n",
+    "residual_3=TfT-y_PRM\n",
+    "rmse3=np.asarray(residual_3)\n",
+    "rmse3 = rmse3[~np.isnan(rmse3)]\n",
+    "rmse33=rmse3*rmse3\n",
+    "rmse333=np.sum(rmse33)\n",
+    "(rmse333/499)**0.5"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Fourth Model- Log function"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 91,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Beta values are : [[ 4.23199253e-11]\n",
+      " [ 1.00000000e+00]\n",
+      " [-3.69215769e-12]]\n"
+     ]
+    }
+   ],
+   "source": [
+    "intercept_arr4 = [1]*len(df)\n",
+    "df['log_ret'] = np.log(df['Vol TSLA'])\n",
+    "XT4 = np.matrix(np.asarray([np.asarray(intercept_arr4),\n",
+    "                                np.asarray(df['TSLA']), \n",
+    "                                np.asarray(df['log_ret'])]))\n",
+    "XTT4 = np.matrix(np.transpose(XT4))\n",
+    "mult_4 = XT4*XTT4\n",
+    "B4 = np.matrix(((np.linalg.inv(mult_4))*XT4)*Y)\n",
+    "print(\"Beta values are : {}\".format(B4))\n",
+    "df['TSLA_PREV'] = df['TSLA'].shift(-1)\n",
+    "x=np.matrix(df['TSLA_PREV'])\n",
+    "z=np.matrix(np.transpose(x))\n",
+    "y_log = np.matrix(XTT4*B4)\n",
+    "residual_4=z- y_log\n",
+    "rmse4=np.asarray(residual_4)\n",
+    "rmse4 = rmse4[~np.isnan(rmse4)]\n",
+    "rmse44 =rmse4*rmse4\n",
+    "rmse444 = np.sum(rmse4)/499\n",
+    "rmse444 = rmse4**0.5"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 83,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 84,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.6.3"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
